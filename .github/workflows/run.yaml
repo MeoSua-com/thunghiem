@@ -1,0 +1,38 @@
+name: run
+on:
+  workflow_dispatch:
+
+jobs:
+  run:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - os: ubuntu-latest
+          rust: stable
+        - os: macos-latest
+          rust: nightly
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install chromedriver
+        uses: nanasess/setup-chromedriver@v2
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.rust }}
+
+      - name: Cache rust dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run chromedriver
+        run: |
+          export DISPLAY=:99
+          chromedriver --port=9515 &
+          sudo Xvfb -ac :99 -screen 0 1280x1024x24 > /dev/null 2>&1 &
+
+      - name: Run CLI
+        run: cargo run
